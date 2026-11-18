@@ -22,7 +22,7 @@
 
 在性能优化 campaign 中，`xllm-npu-sota-loop` 负责优化决策，`xllm-experiment-lifecycle` 负责可恢复 run 与 evidence 状态。
 
-发版内部测试可复用已有环境；交付的 xTask YAML 通过 workflow 复现入口新建容器、拉取固定源码并编译，不依赖原容器与编译产物。
+发版内部测试可复用已有环境；交付原生 xTask YAML 及固定镜像、代码、编译和测试说明，接收方无需 workflow 或原容器/产物。
 
 ## 五分钟开始
 

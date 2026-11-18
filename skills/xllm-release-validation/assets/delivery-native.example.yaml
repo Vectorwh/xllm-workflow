@@ -1,0 +1,14 @@
+# Internal metadata for generating native YAML + standalone instructions.
+# None of this mapping is copied as private fields into the delivered YAML.
+xtask_native:
+  image: quay.io/jd_xllm/xllm-ai:REPLACE_WITH_PUBLIC_IMAGE_VERSION
+  source_url: https://github.com/xllm-ai/xllm.git
+  xtask_url: https://github.com/Vectorwh/xTask.git
+  workspace: /export/home/012-release-delivery
+  sources:
+    - /usr/local/Ascend/ascend-toolkit/set_env.sh
+    - /usr/local/Ascend/nnal/atb/set_env.sh
+  mtp: {model_type: qwen3_5}
+  # If native xTask requires local runtime resources, identify the raw dependency
+  # directory and its preparation source in the release's delivery narrative.
+  dependence_package_path: ''

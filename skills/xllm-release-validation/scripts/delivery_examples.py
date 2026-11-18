@@ -7,8 +7,7 @@ from pathlib import Path
 
 from frameworks import framework
 from release_common import require
-from delivery_reproduction import generate, fresh_spec
-import yaml
+from delivery_native import generate, yaml_text, instructions, settings, replace_tree
 
 
 def choose(summary, selected=None):
@@ -52,17 +51,28 @@ def examples(summary, root, selected=None, *, incomplete=False):
             if not incomplete: raise
             delivery_cases[row["case_id"]] = "待补充：新建环境交付配置不完整，不能使用内部复用用例替代"
             continue
-        text = yaml.safe_dump(task, sort_keys=False, allow_unicode=True)
+        text = yaml_text(row, summary["release"], task)
         destination = root / "delivery/cases" / (row["case_id"] + ".yaml")
         destination.parent.mkdir(parents=True, exist_ok=True)
-        if destination.exists(): require(destination.read_text() == text, "Delivery YAML changed; preserve the archive and use a new campaign/delivery root")
-        else: destination.write_text(text)
+        materials = {destination: text, destination.with_suffix(".md"): instructions(row, summary["release"], task)}
+        if row.get("workload", {}).get("dataset") in {"gsm8k", "sharegpt"}:
+            prompts = Path(row["workload"]["prepared_path"])
+            if not prompts.is_file():
+                require(incomplete, "Frozen prompts missing for native delivery: " + str(prompts))
+                delivery_cases[row["case_id"]] = "待补充：原生用例所需冻结数据尚未归档"
+                continue
+            materials[destination.with_suffix(".prompts.txt")] = prompts.read_text()
+        for path, content in materials.items():
+            if path.exists(): require(path.read_text() == content, "Delivery changed; preserve the archive and use a new campaign/delivery root")
+            else: path.write_text(content)
         delivery_cases[row["case_id"]] = text
     for row in representatives:
         attempt = root / row["result"].get("attempt", "__not_executed__")
         record = {"case_id": row["case_id"], "framework": framework(row), "mode": row["mode"], "kind": row["kind"], "blocks": []}
         if row["mode"] == "xtask":
-            record["blocks"].append({"label": "xTask 新建环境复现 YAML（通过 release.py reproduce 执行准备与测试）", "language": "yaml", "text": delivery_cases[row["case_id"]]})
+            record["blocks"].append({"label": "原生 xTask YAML 测试用例", "language": "yaml", "text": delivery_cases[row["case_id"]]})
+            preparation = "获取固定版本 xTask 和 xLLM，使用 xTask 原生构建工具生成 wheel" if framework(row) == "xllm" else "获取固定版本 xTask，按指定 vLLM-Ascend 镜像新建服务"
+            record["instructions"] = f"原生准备与测试说明：delivery/cases/{row['case_id']}.md。{preparation}，再用 main.py --case_name 执行此用例；接收方无需 workflow、发版 skill 或 release.py。镜像与代码版本见 YAML 注释，JSON 镜像/挂载配置及完整命令见配套说明。"
         else:
             reference = attempt / "service-reference.json"
             service = Path(json.loads(reference.read_text())["directory"]) if reference.is_file() else attempt / "service"
@@ -79,6 +89,7 @@ def examples(summary, root, selected=None, *, incomplete=False):
                 out[path] = {"files": len(v), "manifest_sha256": digest(v)}
                 continue
             if isinstance(v, dict): out.update(flatten(v, path + "."))
+            elif isinstance(v, list): out.update(flatten({str(i): item for i, item in enumerate(v)}, path + "."))
             else: out[path] = v
         return out
     for row in summary["cases"]:
@@ -87,10 +98,13 @@ def examples(summary, root, selected=None, *, incomplete=False):
         fields = ("model", "service", "workload", "accuracy", "code", "environment")
         if row["mode"] == "xtask":
             try:
-                reference_spec = fresh_spec(reference, summary["release"])
-                fresh = fresh_spec(row, summary["release"])
-                reference = reference_spec["cases"][0] | {"case_id": reference["case_id"], "environment": reference_spec["environment"]}
-                fresh = fresh["cases"][0] | {"environment": fresh["environment"]}
+                a = replace_tree(generate(reference, summary["release"]), {settings(reference, summary["release"])["workspace"]: "本轮xTask工作目录"})
+                b = replace_tree(generate(row, summary["release"]), {settings(row, summary["release"])["workspace"]: "本轮xTask工作目录"})
+                reference = {"case_id": reference["case_id"], "native": a}
+                fresh = {"native": b}
+                reference["native"].pop("case_name", None)
+                fresh["native"].pop("case_name", None)
+                fields = ("native",)
             except ValueError:
                 if not incomplete: raise
                 variants.append({"case": row["case_id"], "reference": reference["case_id"], "changes": "待补齐新建环境配置后生成差异"})
@@ -113,4 +127,5 @@ def render(records, *, markdown=True):
             lines.append(block["text"].rstrip())
             if markdown: lines.append("```")
             lines.append("")
+        if record.get("instructions"): lines += [record["instructions"], ""]
     return "\n".join(lines)

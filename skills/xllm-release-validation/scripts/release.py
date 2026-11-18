@@ -378,11 +378,11 @@ def report(root):
     (root / "report.md").write_text((ASSETS / "templates/release-report.md").read_text().replace("@@CONTENT@@", "\n".join(lines)))
     reproduction = ["# 发版测试复现", "", f"- 版本：{summary['release']['version']}",
                     f"- 计划：{root / 'plan.json'}", f"- Workflow：{ROOT}",
-                    "- direct 按实际环境与脚本复现；xTask 交付用例按镜像新建容器、拉取固定代码并编译，不依赖原容器/产物。",
+                    "- direct 按实际环境与脚本复现；xTask 原生交付用例与配套说明不依赖原容器/产物。",
                     "- 新 run root 必须不存在或为空；不要直接重跑旧 attempt 中写死输出目录的脚本。", "",
                     "内部实际配置和日志按 case/attempt 归档。全部 xTask 交付用例在 delivery/cases；下文只展示代表场景，其他场景另列差异。",
-                    "xTask YAML 的 release_reproduction 由 workflow 的 release.py reproduce --yaml CASE.yaml --run-root NEW_SHARED_ROOT 解释，完成准备后调用原生 xTask；直接运行 xTask 不会执行该准备扩展。",
-                    "交付 YAML 是从内部配置派生的新建流程；独立环境硬件重放仍需验收，不将原环境结果视为该流程已验证。", "",
+                    "xTask 接收方按同名 .md 使用 xTask 原生工具获取源码、编译，再以 main.py --case_name 执行；无需 workflow、发版 skill 或 release.py。",
+                    "交付 YAML 是从内部配置派生的原生用例；独立硬件执行仍待验证，不将原环境结果视为该流程已验证。", "",
                     render(representative), "## 其他场景配置差异", "", "```json", json.dumps(variants, ensure_ascii=False, indent=2), "```", ""]
     (root / "reproduction.md").write_text((ASSETS / "templates/reproduction.md").read_text().replace("@@CONTENT@@", "\n".join(reproduction)))
     with (root / "metrics.csv").open("w") as f:
@@ -402,10 +402,6 @@ def main(argv=None):
     plan = commands.add_parser("plan")
     plan.add_argument("--spec", required=True, type=Path)
     plan.add_argument("--run-root", required=True, type=Path)
-    replay = commands.add_parser("reproduce", help="Create a fresh environment from a delivery xTask YAML")
-    replay.add_argument("--yaml", required=True, type=Path)
-    replay.add_argument("--run-root", required=True, type=Path)
-    replay.add_argument("--plan-only", action="store_true", help="Validate and materialize the replay plan without preparing or executing")
     for name in ("prepare", "run", "resume", "collect", "report"):
         command = commands.add_parser(name)
         command.add_argument("--run-root", required=True, type=Path)
@@ -423,9 +419,6 @@ def main(argv=None):
         if args.command == "plan":
             value = create_plan(args.spec, args.run_root)
             print(json.dumps({"plan": str(args.run_root / "plan.json"), "cases": len(value["cases"]), "groups": len(value["groups"])}, indent=2))
-        elif args.command == "reproduce":
-            from delivery_reproduction import reproduce
-            print(json.dumps(reproduce(args.yaml, args.run_root, plan_only=args.plan_only), ensure_ascii=False, indent=2))
         elif args.command == "prepare":
             from release_prepare import prepare_campaign
             print(json.dumps(prepare_campaign(args.run_root.resolve(), load_plan(args.run_root)), ensure_ascii=False, indent=2))

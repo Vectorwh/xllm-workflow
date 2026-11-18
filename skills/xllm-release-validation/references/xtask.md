@@ -10,7 +10,7 @@ xTask 是外部依赖。只读固定版本 checkout，提供独立 JSON/YAML 工
 
 可选 `service_mode: external`：xTask 只运行客户端。service.ownership=managed 时由 workflow 的 direct 服务适配器启动/验证/停止服务（vLLM 使用该路径）；xLLM 已有外部服务也可 ownership=external，并提供身份文件。生成 external_service 配置，不让 xTask 再启动该服务。该模式的客户端容器/依赖准备遵循所选 xTask 原生行为，需在计划审阅时检查 task_config/xllm_config。不会用 external 模式暗中替代不支持的 native 模式。
 
-内部测试的两个 JSON 从外部 checkout 的配置加本轮显式覆盖生成到 attempt/xtask/config；新建交付模式使用 YAML 中的有效配置并启用 exact_config，不继承 checkout 的个人默认值。原 checkout 不修改。CLEAN_RESULTS=false 和正确的 serving_container_name 用于保留原容器；native 的 worker 退出逻辑必须由所选 xTask 自身提供。自动报告上传关闭（XTASK_BENCH_REPORT=0）。身份路径映射放在配置前部，要求这些路径在控制宿主机和容器中确实共享。
+内部测试的两个 JSON 从外部 checkout 的配置加本轮显式覆盖生成到 attempt/xtask/config；内部 exact_config 可使用显式有效配置；原生交付则在同名说明中列出接收方 JSON 的必要覆盖值。原 checkout 不修改。CLEAN_RESULTS=false 和正确的 serving_container_name 用于保留原容器；native 的 worker 退出逻辑必须由所选 xTask 自身提供。自动报告上传关闭（XTASK_BENCH_REPORT=0）。身份路径映射放在配置前部，要求这些路径在控制宿主机和容器中确实共享。
 
 依赖安装按固定 checkout 的 requirement.txt 和文档执行，并记录版本；评测在宿主机运行时，EvalScope/Tokenizer 依赖须在宿主机可用。若该 xTask 的启动方式依赖已安装的 xLLM Python 包，应按相同源码版本的构建/安装说明安装并核对 import 路径与包内可执行文件；已有 xllm_binary 能力时可显式使用指定编译产物，不再假定 pip 安装是必要步骤。两种产物发现方式必须在计划和复现记录中说明，不能让 PATH/import 优先级选到旧包。
 
@@ -20,4 +20,4 @@ xTask 是外部依赖。只读固定版本 checkout，提供独立 JSON/YAML 工
 
 `assess_test_type=para_set` 适用于原生手工扫描，但本 skill 已展开矩阵，因此每个 case/trial 仅执行一组参数，避免重复展开和 num_prompts 被自动改写。
 
-内部 tests/cases/release_case.yaml 保留实际执行记录，可以使用已有容器/产物。交付文档仅展示由 delivery.xtask_reproduction 派生的新建环境 YAML：固定镜像、拉取指定代码并重新编译，不依赖原容器或编译产物。有效 JSON 值内嵌到 YAML；不再独立展示基础 JSON 或启动/测试脚本。通过 workflow 的 release.py reproduce 解释 release_reproduction 准备扩展，再调用原生 xTask；原生 xTask 单独执行不能完成该准备。完整协议见 [fresh-reproduction.md](fresh-reproduction.md)。vLLM 的 external 用例仍由 workflow 管理服务。
+内部 tests/cases/release_case.yaml 保留实际执行记录，可以使用已有容器/产物。交付重新生成原生 YAML：不含 release_* 私有字段、占位符或原二进制路径；不设置 container_name/reuse_existing_container，让 xTask 新建容器并安装本轮 wheel。镜像、完整 commit 和原生准备/测试命令放在同名 .md，报告展示代表 YAML 和说明入口。接收方只用 xTask，不需要 workflow 或 release.py，详见 [native-delivery.md](native-delivery.md)。vLLM external 用例不带 release_service_configuration，原生外部服务须按说明另行启动。

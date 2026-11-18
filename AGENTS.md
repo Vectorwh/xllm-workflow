@@ -115,8 +115,9 @@ when their adapters and runbooks are added.
 | xllm_ops runtime integration | `skills/xllm-npu-xllm-ops-integration/SKILL.md` |
 
 Release campaigns may reuse existing environments internally. Delivered xTask
-YAML must instead create a new container, fetch pinned sources and build fresh
-artifacts through the workflow's explicit reproduction entry point.
+YAML must use native xTask fields and include standalone preparation instructions
+for a new container, pinned sources and fresh artifacts. Recipients must not need
+this workflow; release.py is an internal orchestration entry only.
 
 ## 4. Configuration and Directory Guide
 

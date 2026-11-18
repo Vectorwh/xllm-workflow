@@ -14,7 +14,7 @@ description: 编排 xLLM 版本发布的场景矩阵、性能与精度回归、�
 3. 数据准备和 EvalScope 配置读 [datasets.md](references/datasets.md)。CEval 用于精度，random/GSM8K/ShareGPT 用于性能；真实数据先冻结选样，报告实际长度。
 4. direct 读 [direct.md](references/direct.md)，xTask 读 [xtask.md](references/xtask.md)，vLLM-Ascend 读 [vllm-ascend.md](references/vllm-ascend.md)。两种执行方式均使用 EvalScope。**不携带、不应用、不 cherry-pick、不修改 xTask 补丁**；所选版本无法表达必需配置时阻塞，不切换成 AISBench 或静默切换执行方式。
 5. 比较前读 [comparison.md](references/comparison.md)。关键配置保持一致，允许记录后的框架独立调优；运行日志验证图模式/MTP 生效。正式收益声明仍交给 `xllm-npu-benchmark` 的公平性和证据验收。
-6. 执行/恢复读 [execution.md](references/execution.md)，测量验收读 [acceptance.md](references/acceptance.md)，交付读 [delivery.md](references/delivery.md)、[fresh-reproduction.md](references/fresh-reproduction.md) 与 [word-report.md](references/word-report.md)。内部可复用已有环境；交付 xTask YAML 必须独立新建容器、拉取固定源码并编译。相似故障再读 [lessons-011.md](references/lessons-011.md)。
+6. 执行/恢复读 [execution.md](references/execution.md)，测量验收读 [acceptance.md](references/acceptance.md)，交付读 [delivery.md](references/delivery.md)、[native-delivery.md](references/native-delivery.md) 与 [word-report.md](references/word-report.md)。内部可复用已有环境；交付原生 xTask YAML 及原生准备/测试说明；接收方无需 workflow 或原容器/产物。相似故障再读 [lessons-011.md](references/lessons-011.md)。
 
 ## 命令
 
@@ -28,10 +28,9 @@ python <repo_root>/skills/xllm-release-validation/scripts/release.py resume --ru
 python <repo_root>/skills/xllm-release-validation/scripts/release.py collect --run-root /shared/runs/release-012
 python <repo_root>/skills/xllm-release-validation/scripts/release.py report --run-root /shared/runs/release-012 --docx-content /path/delivery-report.local.yaml
 python <repo_root>/skills/xllm-release-validation/scripts/export_workbooks.py --results /shared/runs/release-012/results.json --mapping /path/workbook-mapping.local.yaml
-python <repo_root>/skills/xllm-release-validation/scripts/release.py reproduce --yaml /path/delivery-case.yaml --run-root /shared/runs/reproduction-012 --plan-only
 ```
 
-`plan` 不连接机器、不创建容器、不安装依赖、不编译；`prepare` 只执行声明的准备项，`run` 才运行测评。没有准备项且使用 random/已有环境时可直接 run。计划锁定后不改身份；调整配置创建新计划。所有 attempt/日志保留，失败不选最好一轮覆盖。
+`release.py` 仅作内部批次编排。`plan` 不连接机器、不创建容器、不安装依赖、不编译；`prepare` 只执行声明的准备项，`run` 才运行测评。没有准备项且使用 random/已有环境时可直接 run。计划锁定后不改身份；调整配置创建新计划。所有 attempt/日志保留，失败不选最好一轮覆盖。
 
 ## 必须核对
 
@@ -44,6 +43,6 @@ python <repo_root>/skills/xllm-release-validation/scripts/release.py reproduce -
 
 输出锁定计划、准备记录、每次脚本/环境/日志、原始性能 summary/percentile/DB 或精度报告、规范化结果、跨框架比较、CSV/Markdown/Word、Excel 和复现入口。
 
-交付执行内容：**direct 每个框架/测试类别展示一个代表场景的实际脚本，优先 BF16 并发 1；xTask 只展示新建环境 YAML 测试用例，不展示独立启动/测试脚本或基础 JSON。** YAML 内含镜像、完整源码 commit、编译、MTP 和有效 xTask 配置，通过 workflow 的 `reproduce` 入口解释准备扩展后调用原生 xTask；原生 xTask 单独执行不会准备该扩展。全部交付用例保存到 delivery/cases；内部复用用例另归档，派生用例不能冒充已完成独立环境硬件重放。其他场景用差异表说明。Word 使用 [模板](assets/templates/release-delivery-template.docx)，交付前渲染并逐页检查。Excel 使用业务映射和 true/false/default。
+交付执行内容：**direct 每个框架/测试类别展示一个代表场景的实际脚本，优先 BF16 并发1；xTask 展示原生 YAML 和原生准备/测试说明，不展示内部启动/测试脚本。** 全部用例及同名 .md 说明保存到 delivery/cases；镜像、完整源码 commit 写明，接收方使用 xTask 自身构建和 main.py 入口，无需本 skill、workflow 或 release.py。YAML 不带私有扩展、路径占位符、原容器名或原编译路径；镜像等原生 JSON 配置在说明中明确。内部实际记录继续归档，派生用例未独立实测时须标注。其他场景用差异表说明。Word 使用 [模板](assets/templates/release-delivery-template.docx)，交付前渲染并逐页检查。Excel 使用业务映射和 true/false/default。
 
 本适配器的本地测试不等于硬件发版验收；记录所选版本的真实 smoke/性能/精度结果后才能声明该环境可用。完成后由 lifecycle validate/finalize/retention 收口；正式证据不完整时保留 measurement-only。通用仓库不保存实际账号、内部地址和私有日志。

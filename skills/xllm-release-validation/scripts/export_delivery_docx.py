@@ -169,6 +169,7 @@ def insert_execution(document, records):
             for block in record["blocks"]:
                 insert(block["label"], heading=True)
                 literals.append(insert(block["text"].rstrip(), "Release Code"))
+            if record.get("instructions"): insert(record["instructions"])
         slot._p.getparent().remove(slot._p)
     return literals
 
@@ -213,8 +214,8 @@ def export(results_path, content_path, output, *, allow_incomplete=False):
         tables[name.upper()] = rows
     document = Document(TEMPLATE)
     if summary.get("cases") and all(c["mode"] == "xtask" for c in summary["cases"]):
-        # The execution section contains only the actual xTask YAML. No launcher,
-        # EvalScope shell, container command, or generated internal script is shown.
+        # Show native xTask YAML and its instruction link, not internal launchers,
+        # EvalScope shell, container command, or generated internal scripts.
         for paragraph in list(document.paragraphs):
             if "_SCRIPT}}" in paragraph.text or paragraph.text == "容器创建脚本":
                 paragraph._p.getparent().remove(paragraph._p)

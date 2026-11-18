@@ -8,7 +8,7 @@
 
 containers.mode=create 使用指定 image 或 reference 容器。参考模式复制 User、Env、WorkingDir、Volumes 和 HostConfig 等运行约束，再应用显式 env/binds/host_config 覆盖；不复制原业务进程，默认启动 sleep infinity。必须审阅生成的 create-request.json，尤其是设备、CPU/内存、网络、IPC、共享内存和挂载。端口映射必须显式提供新 PortBindings，防止占用参考容器端口；保留参考容器及其任务。
 
-Docker Engine 通过配置主机的 Unix socket 创建容器；创建前可显式 pull，最终固定实际 image ID，保存完整容器和镜像 inspect。正式 run 不启用 AutoRemove；不会删除/停止同名外部容器。仅同 recipe 标签的容器可在准备重试时复用，其他同名容器需换名字。mode=existing 只检查已有运行中容器及指定镜像，不接管其业务进程。网络、权限、设备需要符合该镜像所选版本官方说明；示例不是跨机器默认。内部可复用 existing/reference；交付 YAML 必须使用 image 新建且不含 reference，按 [fresh-reproduction.md](fresh-reproduction.md) 生成独立源码和构建路径。
+Docker Engine 通过配置主机的 Unix socket 创建容器；创建前可显式 pull，最终固定实际 image ID，保存完整容器和镜像 inspect。正式 run 不启用 AutoRemove；不会删除/停止同名外部容器。仅同 recipe 标签的容器可在准备重试时复用，其他同名容器需换名字。mode=existing 只检查已有运行中容器及指定镜像，不接管其业务进程。网络、权限、设备需要符合该镜像所选版本官方说明；示例不是跨机器默认。内部可复用 existing/reference；交付原生 YAML 不带旧容器/产物字段，按 [native-delivery.md](native-delivery.md) 附 xTask 原生新建、源码和编译说明。
 
 ## 源码和编译
 

@@ -21,7 +21,7 @@ def inputs(tmp_path):
     from release_common import expand, load_config
     base = expand(load_config(ROOT / "skills/xllm-release-validation/assets/release.example.yaml"))[0]
     base["xtask"]["commit"] = "b" * 40
-    base["delivery"]["xtask_reproduction"]["image"] = "fixture/xllm:release"
+    base["delivery"]["xtask_native"]["image"] = "fixture/xllm:release"
     summary = {"release": {"version": "0.12.0", "commit": "a" * 40},
         "counts": {"PASS": 1, "FAILED": 1}, "claim_scope": "measurement-only", "cases": []}
     for index, status in enumerate(["PASS", "FAILED"]):
@@ -136,8 +136,10 @@ def test_xtask_delivery_contains_only_fresh_yaml_execution_config(tmp_path, inpu
     output = tmp_path / "xtask.docx"
     exporter.export(tmp_path / "results.json", tmp_path / "content.yaml", output)
     text = "\n".join(p.text for p in exporter.paragraphs(Document(output)))
-    assert text.count("release_reproduction:") == 1
-    assert "mode: create" in text and "source/xllm" in text
+    assert text.count("case_name: fixture-0") == 1
+    assert "release_reproduction:" not in text
+    assert "container_name:" not in text and "xllm_binary:" not in text
+    assert "@@" not in text and "fixture-0.md" in text
     assert "fixture_yaml_only" not in text and "/shared/code/xllm" not in text
     for forbidden in ("DO_NOT_SHOW", "literal $VALUE", "#!/bin/bash", "服务启动脚本", "容器创建脚本"):
         assert forbidden not in text
@@ -147,7 +149,8 @@ def test_xtask_delivery_contains_only_fresh_yaml_execution_config(tmp_path, inpu
     release.report(tmp_path)
     for filename in ("report.md", "reproduction.md"):
         text = (tmp_path / filename).read_text()
-        assert text.count("release_reproduction:") == 1
+        assert text.count("case_name: fixture-0") == 1
+        assert "release_reproduction:" not in text
         assert "```bash" not in text and "DO_NOT_SHOW" not in text
 
 
@@ -156,7 +159,7 @@ def test_mixed_delivery_uses_yaml_and_one_direct_representative(tmp_path, inputs
     summary, _ = inputs
     xtask = json.loads(json.dumps(summary["cases"][0]))
     xtask.update(case_id="xtask-fixture", mode="xtask", framework="vllm-ascend", code={"version": "fixture-ascend", "vllm_version": "fixture-core", "image": "fixture-image:tag", "binary": "/usr/local/bin/vllm"})
-    xtask["delivery"]["xtask_reproduction"]["image"] = "fixture-image:tag"
+    xtask["delivery"]["xtask_native"]["image"] = "fixture-image:tag"
     xtask["service"]["flags"] = {"max-num-seqs": 4}
     xtask["service"]["env"] = {}
     xtask["model"].pop("draft_model", None)
@@ -168,7 +171,7 @@ def test_mixed_delivery_uses_yaml_and_one_direct_representative(tmp_path, inputs
     records, variants = examples(summary, tmp_path)
     text = render(records)
     assert len(records) == 2 and len(variants) == 1
-    assert text.count("literal $VALUE") == 1 and text.count("release_reproduction:") == 1
+    assert text.count("literal $VALUE") == 1 and text.count("case_name: xtask-fixture") == 1
     assert "case_name: actual_yaml" not in text
     assert "代表场景" not in variants[0]["changes"]  # Concrete changed values, not a vague note.
     (tmp_path / "mixed-results.json").write_text(json.dumps(summary))

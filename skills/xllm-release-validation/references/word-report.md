@@ -28,7 +28,7 @@ python <repo_root>/skills/xllm-release-validation/scripts/export_delivery_docx.p
 | PR 与特性 | tables.prs/features 和 report.feature_details；特性配置使用 true/false/default，验证结论带证据 |
 | 环境与部署 | tables.environment/deployment；记录机器、物理卡与容器卡映射、CPU、镜像 digest、容器及挂载、软件栈、权重版本 |
 | 构建与准备 | blocks.build_record 和 report.mtp_preparation；写清直接或增量编译、dirty diff、兼容修改、二进制 SHA256、导出工具版本与 draft 身份。纯 xTask 报告不展示容器/转换命令 |
-| 代表场景 | direct 从实际 attempt 读取启动与 EvalScope 脚本；xTask 从锁定配置派生新建环境 YAML，包含镜像、源码、编译和测试，不展示独立脚本/基础 JSON |
+| 代表场景 | direct 从实际 attempt 读取启动与 EvalScope 脚本；xTask 从锁定配置派生原生 YAML，附同名原生准备/测试说明；不展示内部脚本或基础 JSON |
 | 配置差异 | 自动对比其他场景与本框架/方式/类别的代表场景，覆盖并发、量化、数据集、启动和调优配置 |
 | 精度评测 | 方法取叙述文件，实际脚本/YAML 取代表场景；分数取 accuracy cases 的 metrics.scores；保留原计分单位，不默认将 0–1 转成百分数 |
 | 性能评测 | 场景、请求数、均值 E2E/TTFT/TPOT/ITL、QPS、吞吐从 performance cases 读取，状态和 attempt 来源一同展示 |
@@ -40,11 +40,11 @@ python <repo_root>/skills/xllm-release-validation/scripts/export_delivery_docx.p
 
 ## 脚本和可选章节
 
-representatives 可填写确切 case_id 列表；未给时按 framework/mode/kind 分组选一个代表，优先 BF16 并发 1，保留计划顺序，不按结果快慢筛选。direct 读取代表 attempt 的 service/start.sh（或 service-reference 指向的同组服务）和 eval.sh；xTask 生成 delivery/cases 中的新建环境 YAML，不展示内部复用容器的 attempt/xtask/tests/cases/release_case.yaml。缺 direct 实际档案或 xTask 新建配方时默认拒绝正式导出；仅 allow-incomplete 可生成待补充稿。YAML 经 workflow reproduce 解释准备扩展，不能称原生 xTask 可独立完成准备；生成不代表新环境已通过硬件复现。
+representatives 可填写确切 case_id 列表；未给时按 framework/mode/kind 分组选一个代表，优先 BF16 并发 1，保留计划顺序，不按结果快慢筛选。direct 读取代表 attempt 的 service/start.sh（或 service-reference 指向的同组服务）和 eval.sh；xTask 生成 delivery/cases 中的原生 YAML 和同名 .md 说明，不展示内部复用容器的 attempt/xtask/tests/cases/release_case.yaml。缺 direct 实际档案或 xTask 原生交付元数据时默认拒绝正式导出；仅 allow-incomplete 可生成待补充稿。接收方用原生 xTask 构建及测试入口，不需要 workflow/skill/release.py；生成不代表已通过独立硬件复测。
 
-xTask 场景不展示启动脚本、测试脚本、内部生成脚本或基础 JSON；混合执行方式时各组按对应规则展示。纯 xTask 文档也移除容器创建脚本槽位。全部内部材料仍归档，报告结果表仍包含全部场景。构建/转换写身份和准备结论，不在纯 xTask 文档里再展开命令。
+xTask 场景展示原生 YAML 及原生准备/测试说明位置和要点，不展示内部启动脚本、测试脚本、生成脚本或基础 JSON；混合执行方式时各组按对应规则展示。纯 xTask 文档也移除容器创建脚本槽位。全部内部材料仍归档，报告结果表仍包含全部场景。构建/转换写身份和准备结论，不在纯 xTask 文档里再展开命令。
 
-blocks 只用于构建记录和可选准备/外部多模态材料，file/text 二选一；文件只读。启动和测试脚本不再由叙述 YAML 手工粘贴替代，direct 必须来自实际归档；xTask 使用可独立准备环境的 YAML，详见 [fresh-reproduction.md](fresh-reproduction.md)。
+blocks 只用于构建记录和可选准备/外部多模态材料，file/text 二选一；文件只读。启动和测试脚本不再由叙述 YAML 手工粘贴替代，direct 必须来自实际归档；xTask 使用原生 YAML 及配套原生工具说明，详见 [native-delivery.md](native-delivery.md)。
 
 `include_multimodal: false` 会整段删除多模态章节并保持编号连续；启用后可提供 multimodal_accuracy/perf 表。`include_raw_metrics: true` 会将所有原始 summary 和 percentile 叶子字段逐项附在 Word 尾部，保留字段名及层次路径；默认正文只展示核心指标，完整原始数据始终随 results.json 和原始目录归档，不能丢弃。
 

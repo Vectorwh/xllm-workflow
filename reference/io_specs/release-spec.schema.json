@@ -336,10 +336,11 @@
     "delivery": {
       "type": "object",
       "properties": {
-        "xtask_reproduction": {
+        "xtask_native": {
           "type": "object",
           "required": [
-            "image"
+            "image",
+            "workspace"
           ],
           "properties": {
             "image": {
@@ -349,48 +350,27 @@
             "source_url": {
               "type": "string"
             },
-            "build": {
-              "type": "object",
-              "required": [
-                "binary",
-                "gate_args"
-              ],
-              "properties": {
-                "binary": {
-                  "type": "string"
-                },
-                "build_dir": {
-                  "type": "string"
-                },
-                "gate_args": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "minItems": 1
-                }
-              }
+            "xtask_url": {
+              "type": "string"
             },
-            "container": {
-              "type": "object",
-              "properties": {
-                "reference": false,
-                "mode": false,
-                "name": false,
-                "image": false
-              }
+            "workspace": {
+              "type": "string",
+              "pattern": "^/export/home/"
             },
-            "setup": {
+            "sources": {
               "type": "array",
               "items": {
-                "type": "object"
+                "type": "string"
               }
             },
-            "resources": {
-              "type": "array",
-              "items": {
-                "type": "object"
-              }
+            "env": {
+              "type": "object"
+            },
+            "mtp": {
+              "type": "object"
+            },
+            "dependence_package_path": {
+              "type": "string"
             }
           }
         }

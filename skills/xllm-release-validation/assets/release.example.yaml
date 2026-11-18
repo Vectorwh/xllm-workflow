@@ -6,7 +6,7 @@ execution:
   default_mode: direct
   max_cases: 100
 environment: environment.example.yaml
-delivery: delivery-reproduction.example.yaml
+delivery: delivery-native.example.yaml
 code:
   repo: /shared/code/xllm
   binary: /shared/code/xllm/build/lib.linux-aarch64-cpython-311/xllm/xllm

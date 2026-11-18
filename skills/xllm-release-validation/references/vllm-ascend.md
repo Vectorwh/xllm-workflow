@@ -10,6 +10,6 @@ framework=vllm-ascend 与 mode=direct 是完整的新增执行路径：生成 vl
 
 MTP 使用本版本实际 method 和 token 数；图模式由实际 compilation-config.cudagraph_mode 识别，例如 FULL_DECODE_ONLY→decode。启动日志必须有按版本配置的 activation_checks.graph/mtp，验证启用；不能只靠 streaming Spec Accept 推断。内部 capture size、算子/通信融合等可分别调优并归档。示例参数不是所有 vLLM-Ascend 版本的默认值。
 
-可选 mode=xtask 时使用 service_mode=external：workflow 按上述方式管理 vLLM 服务，xTask 仅通过 external_service 做 EvalScope。YAML 中 release_service_configuration 保留实际框架/服务配置作为复现元数据；所选 xTask 需支持 external service、session 和所需 EvalScope 参数。native vLLM 启动适配尚未验证，明确拒绝。此选项不能在 native 不可用时静默启用。用户已有 vLLM 服务的 ownership=external 身份尚未适配，须用 workflow-managed 服务。
+可选 mode=xtask 时使用 service_mode=external：内部由 workflow 按上述方式管理 vLLM 服务，xTask 仅通过 external_service 做 EvalScope。内部 YAML 的 release_service_configuration 仅作归档元数据，交付原生 YAML 时必须去除；同名说明写清用指定镜像新建服务及其启动参数。所选 xTask 需支持 external service、session 和所需 EvalScope 参数。native vLLM 启动适配尚未验证，明确拒绝。此选项不能在 native 不可用时静默启用。用户已有 vLLM 服务的 ownership=external 身份尚未适配，须用 workflow-managed 服务。
 
 参考官方 [Qwen3.5/3.6 部署说明](https://docs.vllm.ai/projects/ascend/en/v0.26.0rc/tutorials/models/Qwen3.5-27B-Qwen3.6-27B.html) 与 [MTP](https://docs.vllm.ai/projects/ascend/en/latest/user_guide/feature_guide/speculative_decoding.html)。实施时切换到用户指定版本文档，并保存本轮 CLI/help 与激活日志；当前离线验证不代替对应版本的 NPU smoke。

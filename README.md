@@ -22,7 +22,7 @@ Evidence-driven workflows, skills, scripts, and reference knowledge for large-mo
 
 For an optimization campaign, `xllm-npu-sota-loop` owns the optimization decisions while `xllm-experiment-lifecycle` owns the resumable run and evidence state.
 
-Release testing may reuse environments internally. Delivered xTask YAML uses the workflow reproduction entry point to create a new container, fetch pinned sources and compile fresh artifacts; it does not require the original container or binary.
+Release testing may reuse environments internally. Deliver native xTask YAML with standalone instructions for the pinned image, source checkout, build and test. Recipients use xTask tools without this workflow or the original container/binary.
 
 ## Five-minute start
 
