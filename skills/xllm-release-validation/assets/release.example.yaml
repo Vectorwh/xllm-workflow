@@ -1,0 +1,122 @@
+schema_version: 1
+release:
+  version: "0.12.0"
+  commit: "0000000000000000000000000000000000000000" # Replace with the real full commit.
+execution:
+  default_mode: direct
+  max_cases: 100
+environment: environment.example.yaml
+delivery: delivery-reproduction.example.yaml
+code:
+  repo: /shared/code/xllm
+  binary: /shared/code/xllm/build/lib.linux-aarch64-cpython-311/xllm/xllm
+  build_verdict: /shared/build-record/build/verdict.json
+  binary_provenance: /shared/build-record/build/binary-provenance.json
+  allow_dirty: false
+xtask:
+  repo: /shared/xTask
+  commit: "0000000000000000000000000000000000000000"
+  service_mode: native
+  instance_host: 127.0.0.1
+model_profiles:
+  qwen-bf16:
+    name: Qwen3.5-27B
+    path: /models/Qwen3.5-27B
+    tokenizer: /models/Qwen3.5-27B
+    draft_model: /models/Qwen3.5-27B-mtp
+    dtype: bfloat16
+    quantization: none
+    sha256: {} # Full immutable model file hashes when preparing formal evidence.
+  qwen-w8a8:
+    name: Qwen3.5-27B-w8a8
+    path: /models/Qwen3.5-27B-w8a8
+    tokenizer: /models/Qwen3.5-27B-w8a8
+    draft_model: /models/Qwen3.5-27B-w8a8-mtp
+    dtype: bfloat16
+    quantization: W8A8_DYNAMIC
+service_profiles:
+  tp2:
+    ownership: managed
+    restart_policy: reuse_group
+    devices: [0, 1]
+    physical_devices: [0, 1]
+    cpu_sets: [0-39, 40-79]
+    api_url: http://127.0.0.1:18045/v1
+    port: 18045
+    master_port: 32809
+    hccl_port: 53903
+    inter_case_seconds: 10
+    flags:
+      communication_backend: hccl
+      backend: llm
+      block_size: 128
+      enable_graph: true
+      enable_graph_double_buffer: false
+      enable_graph_mode_decode_no_padding: true
+      enable_chunked_prefill: true
+      enable_prefix_cache: false
+      enable_schedule_overlap: true
+      enable_shm: true
+      enable_flashcomm1: true
+      enable_mmrs_fusion: true
+      enable_mtp_draft_body_tp1: true
+      num_speculative_tokens: 4
+      max_concurrent_requests: 4
+      max_memory_utilization: 0.7
+      max_seqs_per_batch: 4
+      max_tokens_per_batch: 32768
+      task: generate
+    env:
+      TRITON_BINARY_PATH: /shared/code/xllm/build/lib.linux-aarch64-cpython-311/xllm/triton_npu/binary
+      PYTORCH_NPU_ALLOC_CONF: expandable_segments:True
+      NPU_MEMORY_FRACTION: "0.98"
+      OMP_NUM_THREADS: "12"
+      HCCL_CONNECT_TIMEOUT: "7200"
+      HCCL_OP_EXPANSION_MODE: AIV
+workload_profiles:
+  random-2k2k:
+    dataset: random
+    endpoint: /chat/completions
+    input_tokens: 2048
+    output_tokens: 2048
+    parallel: [1, 2, 4]
+    number: 40
+    warmup: 10
+    rate: -1
+    temperature: 0
+    seed: 42
+    ignore_eos: true
+    stream: true
+    tokenize_prompt: true
+    strict_lengths: true
+accuracy_profiles:
+  ceval:
+    datasets: [ceval]
+    dataset_revision: REPLACE_WITH_DATASET_REVISION
+    dataset_args: {ceval: {few_shot_num: 5, few_shot_random: false}}
+    generation_config: {temperature: 0, max_tokens: 4096}
+    batch_size: 1
+    report_glob: "reports/**/*.json"
+    score_pointer: /score
+cases:
+  - id: qwen-bf16-direct
+    kind: performance
+    mode: direct
+    model_profile: qwen-bf16
+    service_profile: tp2
+    workload_profile: random-2k2k
+    max_attempts: 2
+  - id: qwen-w8a8-xtask
+    kind: performance
+    mode: xtask
+    model_profile: qwen-w8a8
+    service_profile: tp2
+    workload_profile: random-2k2k
+    max_attempts: 2
+  - id: qwen-bf16-ceval
+    kind: accuracy
+    mode: direct
+    model_profile: qwen-bf16
+    service_profile: tp2
+    accuracy_profile: ceval
+    acceptance: {minimum_score: 0.8} # Example threshold; replace with release policy.

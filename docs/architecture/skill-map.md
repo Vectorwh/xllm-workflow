@@ -6,9 +6,9 @@
 
 ## 数量
 
-- 公开：21
+- 公开：22
 - 内部 / 仅显式调用：1
-- Canonical skills 总数：22
+- Canonical skills 总数：23
 
 ## 角色与领域矩阵
 
@@ -36,6 +36,7 @@
 | `xllm-npu-sota-loop` | [Performance Optimization Loop](../../skills/xllm-npu-sota-loop/SKILL.md) | `orchestration` | `performance` | `public-primary` |
 | `xllm-npu-triton-migration` | [Triton-Ascend Operator Migration](../../skills/xllm-npu-triton-migration/SKILL.md) | `development-and-review` | `development` | `public-primary` |
 | `xllm-npu-xllm-ops-integration` | [xllm_ops Runtime Integration](../../skills/xllm-npu-xllm-ops-integration/SKILL.md) | `development-and-review` | `development` | `public-primary` |
+| `xllm-release-validation` | [Release Validation](../../skills/xllm-release-validation/SKILL.md) | `orchestration` | `evaluation` | `public-primary` |
 
 ## 依赖关系图
 
@@ -65,6 +66,7 @@ flowchart TD
   s19["xllm-npu-sota-loop"]
   s20["xllm-npu-triton-migration"]
   s21["xllm-npu-xllm-ops-integration"]
+  s22["xllm-release-validation"]
   s02 --> s03
   s02 --> s07
   s02 --> s10
@@ -107,6 +109,13 @@ flowchart TD
   s20 --> s21
   s21 --> s08
   s21 --> s12
+  s22 --> s03
+  s22 --> s05
+  s22 --> s07
+  s22 --> s08
+  s22 --> s14
+  s22 --> s17
+  s22 --> s18
 ```
 
 ## Framework 与 backend scope
@@ -135,6 +144,7 @@ flowchart TD
 | `xllm-npu-sota-loop` | xllm | ascend-npu |
 | `xllm-npu-triton-migration` | xllm; torch-npu-ops | triton-ascend; ascend-npu |
 | `xllm-npu-xllm-ops-integration` | xllm | ascend-npu; xllm-ops |
+| `xllm-release-validation` | xllm; vllm-ascend; comparison-artifacts | ascend-npu; xtask; direct |
 
 ## 公开 Skill 详情
 
@@ -326,6 +336,15 @@ flowchart TD
 - **不适用场景：** source operator migration; generic runtime feature。
 - **输出：** runtime wrapper; operation registration; build and end-to-end evidence。
 - **Skill：** [xllm_ops Runtime Integration](../../skills/xllm-npu-xllm-ops-integration/SKILL.md)
+
+### 发版数据测试（Release Validation，`xllm-release-validation`）
+
+准备容器、构建和MTP，使用 xTask/direct 执行 EvalScope 矩阵并对比指定版本 vLLM-Ascend，交付 Word、表格和复现材料。
+
+- **适用场景：** versioned release test planning execution and delivery; release performance accuracy matrix with xtask or direct execution; release regression workbook filling and reproducibility。
+- **不适用场景：** one ordinary performance workload; open-ended code optimization; standalone service maintenance; patching xtask source。
+- **输出：** versioned test matrix; validated release data; Word delivery report, filled workbooks and reproduction bundle。
+- **Skill：** [Release Validation](../../skills/xllm-release-validation/SKILL.md)
 
 ## 内部 / 仅显式调用
 

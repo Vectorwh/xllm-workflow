@@ -1,0 +1,10 @@
+{
+  "ENV_CONFIG": {
+    "CLEAN_RESULTS": false
+  },
+  "DOCKER_CONFIG": {
+    "serving_container_name": "xllm-release",
+    "enable_proxy": "False",
+    "volumes": {}
+  }
+}

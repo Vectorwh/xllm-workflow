@@ -31,7 +31,7 @@ def test_routing_corpus_has_required_coverage():
     required = {
         "accuracy", "batch", "benchmark", "build", "capacity", "compute",
         "development", "evaluation", "framework", "history", "incident", "internal",
-        "lifecycle", "optimization", "pipeline", "profiling", "report", "review", "service",
+        "lifecycle", "optimization", "pipeline", "profiling", "release", "report", "review", "service",
     }
     assert required <= {case["family"] for case in cases}
 
@@ -89,3 +89,12 @@ def test_every_public_skill_is_covered_by_routing_corpus():
         for name in case[field]
     }
     assert public <= covered, sorted(public - covered)
+
+
+def test_release_routes_to_orchestrator_without_capturing_standalone_work():
+    cases = load_corpus()["cases"]
+    release_cases = [case for case in cases if case["family"] == "release"]
+    assert len(release_cases) >= 3
+    assert all(case["expected_primary"] == ["xllm-release-validation"] for case in release_cases)
+    standalone = {"xllm-npu-perf-runner", "xllm-npu-accuracy-runner", "xllm-npu-server-manager"}
+    assert standalone <= {case["expected_primary"][0] for case in cases if case["family"] != "release"}

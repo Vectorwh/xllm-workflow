@@ -44,3 +44,7 @@
 - [PR14 信息架构方案](pr14/PLAN.md)：本次导航工作的原始设计基线。
 
 历史记录继续保持链接稳定；当前操作指南从上面的分类入口访问。
+
+## Release validation
+
+- [发版数据测试 skill](../skills/xllm-release-validation/SKILL.md)：容器/构建/MTP 准备、EvalScope CEval 与 random/GSM8K/ShareGPT、xTask/direct 执行、指定版本 vLLM-Ascend 比较、Word/Excel 与复现交付。xTask 作为外部依赖，不携带补丁。

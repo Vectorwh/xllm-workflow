@@ -1,0 +1,136 @@
+schema_version: 1
+release:
+  version: '0.12.0'
+  commit: '0000000000000000000000000000000000000000'
+execution: {default_mode: direct, max_cases: 100}
+environment: environment.example.yaml
+# Optional: prepare containers/source/build/draft, then run. Make the paths in
+# preparation and code_profiles agree. Remove entries when reusing artifacts.
+preparation: preparation.example.yaml
+code_profiles:
+  xllm:
+    repo: /shared/code/xllm-release
+    binary: /shared/code/xllm-release/build/lib.linux-aarch64-cpython-311/xllm/xllm
+    build_verdict: /shared/build-record/release-candidate-001/build/verdict.json
+    binary_provenance: /shared/build-record/release-candidate-001/build/binary-provenance.json
+    allow_dirty: false
+  vllm:
+    version: REPLACE_WITH_USER_VLLM_ASCEND_VERSION
+    vllm_version: REPLACE_WITH_COMPATIBLE_VLLM_VERSION
+    image: quay.io/ascend/vllm-ascend:REPLACE_WITH_USER_VERSION
+    binary: /usr/local/bin/vllm
+model_profiles:
+  bf16:
+    name: Qwen3.5-27B
+    path: /models/Qwen3.5-27B
+    tokenizer: /models/Qwen3.5-27B
+    dtype: bfloat16
+    quantization: none
+    sha256: {} # Populate full immutable base weights for comparable evidence.
+service_profiles:
+  xllm:
+    ownership: managed
+    restart_policy: reuse_group
+    devices: [0, 1]
+    physical_devices: [0, 1]
+    cpu_sets: [0-39, 40-79]
+    api_url: http://127.0.0.1:18045/v1
+    port: 18045
+    master_port: 32809
+    hccl_port: 53903
+    graph_phase: decode
+    flags:
+      communication_backend: hccl
+      enable_graph: true
+      enable_graph_mode_decode_no_padding: false
+      enable_chunked_prefill: true
+      enable_prefix_cache: false
+      num_speculative_tokens: 4
+      max_concurrent_requests: 4
+      max_seqs_per_batch: 4
+      max_tokens_per_batch: 32768
+      max_memory_utilization: 0.7
+    # Replace with precise activation lines from the selected version's logs.
+    activation_checks: {graph: REPLACE_GRAPH_ACTIVATION_PATTERN, mtp: REPLACE_MTP_ACTIVATION_PATTERN}
+  vllm:
+    ownership: managed
+    restart_policy: reuse_group
+    devices: [0, 1]
+    physical_devices: [0, 1]
+    cpu_sets: [0-39, 40-79]
+    api_url: http://127.0.0.1:18046/v1
+    port: 18046
+    master_port: 32810
+    hccl_port: 53904
+    flags:
+      enable-chunked-prefill: true
+      enable-prefix-caching: false
+      speculative-config: {method: qwen3_5_mtp, num_speculative_tokens: 4}
+      compilation-config: {cudagraph_mode: FULL_DECODE_ONLY, max_cudagraph_capture_size: 20}
+      max-num-seqs: 4
+      max-num-batched-tokens: 32768
+      gpu-memory-utilization: 0.7
+      trust-remote-code: true
+    activation_checks: {graph: REPLACE_GRAPH_ACTIVATION_PATTERN, mtp: REPLACE_MTP_ACTIVATION_PATTERN}
+workload_profiles:
+  gsm8k:
+    dataset: gsm8k
+    dataset_revision: REPLACE_WITH_PINNED_REVISION
+    dataset_path: /shared/datasets/gsm8k/test.jsonl
+    prepared_path: /shared/datasets/frozen/gsm8k-seed42-n40.txt
+    length_policy: native
+    strict_lengths: false
+    input_tokens: 2048 # Reference budget only for native; actual lengths are reported.
+    output_tokens: 2048
+    parallel: [1, 2, 4]
+    number: 40
+    warmup: 10
+    endpoint: /chat/completions
+    seed: 42
+    temperature: 0
+    ignore_eos: true
+    stream: true
+    tokenize_prompt: true
+  sharegpt:
+    dataset: sharegpt
+    dataset_revision: REPLACE_WITH_PINNED_REVISION
+    dataset_path: /shared/datasets/sharegpt/sharegpt.json
+    prepared_path: /shared/datasets/frozen/sharegpt-first-user-seed42-n40.txt
+    sharegpt_turn: first_user
+    length_policy: native
+    strict_lengths: false
+    input_tokens: 2048
+    output_tokens: 2048
+    parallel: [1, 2, 4]
+    number: 40
+    warmup: 10
+    endpoint: /chat/completions
+    seed: 42
+    temperature: 0
+    ignore_eos: true
+    stream: true
+    tokenize_prompt: true
+accuracy_profiles:
+  ceval:
+    datasets: [ceval]
+    dataset_revision: REPLACE_WITH_PINNED_REVISION
+    dataset_args:
+      ceval: {dataset_id: /shared/datasets/ceval, few_shot_num: 5, few_shot_random: false}
+    generation_config: {temperature: 0, max_tokens: 4096}
+    batch_size: 1
+    report_glob: 'reports/**/ceval.json'
+    score_pointer: /score # Confirm against the selected EvalScope version's actual report.
+cases:
+  - {id: xllm-bf16-gsm8k, framework: xllm, code_profile: xllm, comparison_group: bf16, model_profile: bf16, model: {draft_model: /models/Qwen3.5-27B-mtp-release}, service_profile: xllm, workload_profile: gsm8k}
+  - id: vllm-bf16-gsm8k
+    framework: vllm-ascend
+    code_profile: vllm
+    comparison_group: bf16
+    model_profile: bf16
+    service_profile: vllm
+    workload_profile: gsm8k
+    environment: {service: {container: vllm-release, sources: []}}
+  - {id: xllm-bf16-sharegpt, framework: xllm, code_profile: xllm, comparison_group: bf16, model_profile: bf16, model: {draft_model: /models/Qwen3.5-27B-mtp-release}, service_profile: xllm, workload_profile: sharegpt}
+  - {id: vllm-bf16-sharegpt, framework: vllm-ascend, code_profile: vllm, comparison_group: bf16, model_profile: bf16, service_profile: vllm, workload_profile: sharegpt, environment: {service: {container: vllm-release, sources: []}}}
+  - {id: xllm-ceval, kind: accuracy, framework: xllm, code_profile: xllm, model_profile: bf16, model: {draft_model: /models/Qwen3.5-27B-mtp-release}, service_profile: xllm, accuracy_profile: ceval}
+# CEval threshold is release policy; no default PASS score is assumed.

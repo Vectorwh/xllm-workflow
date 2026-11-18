@@ -1,0 +1,22 @@
+# The adapter renders the full native YAML from the canonical release case.
+# Each generated task has one concrete workload: no second parameter scan.
+case_name: release_case
+engine_type: xllm
+model_path: /models/example-model
+served_model_name: example-model
+metrics: perf
+dataset_name: random
+benchmark:
+  benchmark_type: evalscope
+  perf:
+    batch_size: 1
+    num_prompts: 40
+    warmup_num: 10
+    request_rate: -1
+    min_prompt_length: 2048
+    max_prompt_length: 2048
+    output_len: 2048
+    max_out_len: 2048
+    stream: true
+    temperature: 0
+    tokenize_prompt: true

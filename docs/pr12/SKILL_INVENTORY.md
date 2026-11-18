@@ -76,3 +76,7 @@ restore the orphaned hybrid state.
 8. Do not generalize names from declared scope: xLLM is primary, vLLM-Ascend/SGLang support remains adapter/artifact-specific.
 9. Main competing descriptions are SOTA versus benchmark/profiler/pipeline; eval versus perf/accuracy/server; batch versus repeated perf; benchmark versus run-and-compare; incident versus accuracy/profiling.
 10. No canonical entry is install-unreachable. `ssh-remote-exec` is support-only and implicit routing is disabled; the history query is now a formal public skill.
+
+## Post-baseline additions
+
+- `xllm-release-validation`: versioned release preparation, external xTask/direct EvalScope adapters, CEval and real-data performance, pinned vLLM-Ascend comparison and Word/workbook/reproduction delivery.

@@ -17,6 +17,7 @@
 - [NPU Incident Triage](./xllm-npu-incident-triage/SKILL.md) — 复现并诊断 runtime、通信、图模式和构建事故。（`xllm-npu-incident-triage`）
 - [Ascend NPU Profiler](./xllm-npu-profiler/SKILL.md) — 采集昇腾 profile 并生成标准五表分析。（`xllm-npu-profiler`）
 - [Performance Optimization Loop](./xllm-npu-sota-loop/SKILL.md) — 执行基于证据的多轮 xLLM 性能优化任务。（`xllm-npu-sota-loop`）
+- [Release Validation](./xllm-release-validation/SKILL.md) — 准备容器、构建和MTP，使用 xTask/direct 执行 EvalScope 矩阵并对比指定版本 vLLM-Ascend，交付 Word、表格和复现材料。（`xllm-release-validation`）
 
 ## 按角色浏览
 
@@ -27,6 +28,7 @@
 - [Batch Performance Campaign](./xllm-npu-batch-perf/SKILL.md) (`xllm-npu-batch-perf`)
 - [Mixed Evaluation Orchestrator](./xllm-npu-eval-runner/SKILL.md) (`xllm-npu-eval-runner`)
 - [Performance Optimization Loop](./xllm-npu-sota-loop/SKILL.md) (`xllm-npu-sota-loop`)
+- [Release Validation](./xllm-release-validation/SKILL.md) (`xllm-release-validation`)
 
 ### 执行器
 
@@ -77,6 +79,7 @@
 
 - [Mixed Evaluation Orchestrator](./xllm-npu-eval-runner/SKILL.md) (`xllm-npu-eval-runner`)
 - [xLLM Service Manager](./xllm-npu-server-manager/SKILL.md) (`xllm-npu-server-manager`)
+- [Release Validation](./xllm-release-validation/SKILL.md) (`xllm-release-validation`)
 
 ### `accuracy`
 
@@ -118,7 +121,7 @@
 
 ## 公开与内部能力
 
-- **公开：** 21 个具有直接用户目标的 skills。
+- **公开：** 22 个具有直接用户目标的 skills。
 - **内部 / 仅显式调用：** 1 个 skill。它可以被显式调用或委托，但不能成为隐式主路由。
 
 - [Remote SSH Execution](./ssh-remote-exec/SKILL.md) (`ssh-remote-exec`) — Execute explicitly requested SSH and remote-container commands for delegated workflows.
@@ -432,6 +435,20 @@ Canonical ID：`xllm-npu-xllm-ops-integration`
 **输出：** runtime wrapper; operation registration; build and end-to-end evidence。
 
 查看 [xllm_ops Runtime Integration](./xllm-npu-xllm-ops-integration/SKILL.md)。
+
+### 发版数据测试（Release Validation）
+
+Canonical ID：`xllm-release-validation`
+角色：`orchestration` · 领域：`evaluation` · 暴露方式：`public-primary`
+准备容器、构建和MTP，使用 xTask/direct 执行 EvalScope 矩阵并对比指定版本 vLLM-Ascend，交付 Word、表格和复现材料。
+
+**适用场景：** versioned release test planning execution and delivery; release performance accuracy matrix with xtask or direct execution; release regression workbook filling and reproducibility。
+
+**不适用场景：** one ordinary performance workload; open-ended code optimization; standalone service maintenance; patching xtask source。
+
+**输出：** versioned test matrix; validated release data; Word delivery report, filled workbooks and reproduction bundle。
+
+查看 [Release Validation](./xllm-release-validation/SKILL.md)。
 
 ## 兼容性说明
 

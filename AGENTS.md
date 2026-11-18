@@ -90,6 +90,7 @@ when their adapters and runbooks are added.
 
 | Task | Start With |
 |---|---|
+| Versioned release preparation, xTask/direct matrices, pinned vLLM-Ascend comparison and delivery | `skills/xllm-release-validation/SKILL.md` |
 | Query model optimization history, prior risks, or PR lessons | `skills/model-pr-optimization-history/SKILL.md` |
 | Create, resume, validate, finalize, or archive an experiment run | `skills/xllm-experiment-lifecycle/SKILL.md` |
 | End-to-end optimization goal | `skills/xllm-npu-sota-loop/SKILL.md` |
@@ -112,6 +113,10 @@ when their adapters and runbooks are added.
 | NPU code review before PR | `skills/xllm-npu-code-review/SKILL.md` |
 | Triton-Ascend operator migration | `skills/xllm-npu-triton-migration/SKILL.md` |
 | xllm_ops runtime integration | `skills/xllm-npu-xllm-ops-integration/SKILL.md` |
+
+Release campaigns may reuse existing environments internally. Delivered xTask
+YAML must instead create a new container, fetch pinned sources and build fresh
+artifacts through the workflow's explicit reproduction entry point.
 
 ## 4. Configuration and Directory Guide
 

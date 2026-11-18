@@ -1,0 +1,6 @@
+{
+  "XLLM_CONFIG": {
+    "serving_container_name": "xllm-release",
+    "enable_proxy": false
+  }
+}

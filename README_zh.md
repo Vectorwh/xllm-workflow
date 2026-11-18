@@ -8,6 +8,7 @@
 
 | 目标 | 首选入口 |
 |---|---|
+| 发版容器/构建/MTP 准备、xTask/direct 矩阵、指定版本 vLLM-Ascend 比较与交付 | `xllm-release-validation` |
 | 创建、恢复、finalize 或 archive 实验 | `xllm-experiment-lifecycle` |
 | 多轮迭代优化 xLLM 性能 | `xllm-npu-sota-loop` |
 | 多轮开发或优化 TileLang / generated PTO kernel | `tilelang-pto-kernel-workflow` |
@@ -20,6 +21,8 @@
 | 查询模型与 PR 历史经验 | `model-pr-optimization-history` |
 
 在性能优化 campaign 中，`xllm-npu-sota-loop` 负责优化决策，`xllm-experiment-lifecycle` 负责可恢复 run 与 evidence 状态。
+
+发版内部测试可复用已有环境；交付的 xTask YAML 通过 workflow 复现入口新建容器、拉取固定源码并编译，不依赖原容器与编译产物。
 
 ## 五分钟开始
 

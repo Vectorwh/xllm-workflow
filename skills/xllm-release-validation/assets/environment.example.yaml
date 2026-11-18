@@ -1,0 +1,21 @@
+shared_filesystem: true
+resource_pool_id: ascend-release-lab
+lease_dir: /shared/release-device-leases
+# Control host, remote hosts and containers must see these absolute paths identically.
+host:
+  python: python3
+service:
+  container: xllm-release
+  python: python3
+  sources:
+    - /usr/local/Ascend/ascend-toolkit/set_env.sh
+    - /usr/local/Ascend/nnal/atb/set_env.sh
+client:
+  python: python3
+  evalscope_command: [evalscope]
+  cpu_set: 80-87
+idle_limits:
+  hbm_usage_pct: 10
+  aicore_usage_pct: 1
+# Fill with the actual pinned package versions for your release.
+expected_packages: {}

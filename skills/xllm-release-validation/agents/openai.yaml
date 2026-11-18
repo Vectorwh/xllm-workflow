@@ -1,0 +1,4 @@
+interface:
+  display_name: "xLLM Release Validation"
+  short_description: "Plan and validate release data with xTask or direct execution"
+  default_prompt: "Use $xllm-release-validation to plan and run a versioned xLLM release test matrix and produce reproducible reports."

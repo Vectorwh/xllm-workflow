@@ -8,6 +8,7 @@ Evidence-driven workflows, skills, scripts, and reference knowledge for large-mo
 
 | Goal | Start with |
 |---|---|
+| Prepare containers/builds/MTP, validate xTask/direct release matrices and compare a pinned vLLM-Ascend baseline | `xllm-release-validation` |
 | Create, resume, finalize, or archive an experiment | `xllm-experiment-lifecycle` |
 | Optimize xLLM performance through multiple iterations | `xllm-npu-sota-loop` |
 | Develop or optimize a TileLang or generated PTO kernel through multiple rounds | `tilelang-pto-kernel-workflow` |
@@ -20,6 +21,8 @@ Evidence-driven workflows, skills, scripts, and reference knowledge for large-mo
 | Query historical model and PR lessons | `model-pr-optimization-history` |
 
 For an optimization campaign, `xllm-npu-sota-loop` owns the optimization decisions while `xllm-experiment-lifecycle` owns the resumable run and evidence state.
+
+Release testing may reuse environments internally. Delivered xTask YAML uses the workflow reproduction entry point to create a new container, fetch pinned sources and compile fresh artifacts; it does not require the original container or binary.
 
 ## Five-minute start
 

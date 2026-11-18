@@ -95,7 +95,7 @@ def validate_spec(spec: dict[str, Any]) -> list[str]:
     level = get_nested(spec, "identity.level")
     if level not in {"smoke", "quick", "full"}:
         return ["identity.level must be smoke, quick, or full"]
-    if get_nested(spec, "identity.kind") not in {"performance_optimization", "benchmark", "profiling", "accuracy", "incident"}:
+    if get_nested(spec, "identity.kind") not in {"performance_optimization", "benchmark", "profiling", "accuracy", "incident", "release_validation"}:
         errors.append("identity.kind has an unsupported value")
     if get_nested(spec, "code.framework") not in {"xllm", "vllm-ascend", "sglang"}:
         errors.append("code.framework has an unsupported value")
@@ -304,6 +304,23 @@ def resolve_spec_path(spec_path: Path, value: str | None) -> Path | None:
 
 
 def observed_code_identity(spec: dict[str, Any], spec_path: Path) -> dict[str, Any]:
+    if spec.get("code", {}).get("identity_type") == "package":
+        code = spec["code"]
+        versions, errors, metadata = {}, [], {}
+        for name, expected in code.get("packages", {}).items():
+            try:
+                distribution = importlib.metadata.distribution(name)
+                versions[name] = distribution.version
+                if distribution.version != expected:
+                    errors.append(f"{name} version differs")
+                for item in distribution.files or []:
+                    if str(item).endswith(("/METADATA", "/RECORD")):
+                        path = Path(distribution.locate_file(item))
+                        if path.is_file(): metadata[f"{name}/{item}"] = file_sha256(path)
+            except importlib.metadata.PackageNotFoundError:
+                errors.append(f"{name} is not installed")
+        return {"valid": bool(versions) and not errors, "identity_type": "package", "path": code.get("repo"),
+                "commit": code.get("version"), "packages": versions, "metadata_sha256": metadata, "errors": errors, "dirty": False}
     source = resolve_spec_path(spec_path, get_nested(spec, "code.repo"))
     identity = git_identity(source) if source else {"valid": False}
     binary = resolve_spec_path(spec_path, get_nested(spec, "code.binary"))
@@ -371,13 +388,14 @@ def preflight(spec_path: Path, output: Path | None) -> dict[str, Any]:
     run_root_value = spec.get("identity", {}).get("run_root")
     checks: list[dict[str, Any]] = []
     identity = observed_code_identity(spec, spec_path) if source else {"valid": False, "path": None}
-    add_check(checks, "source_git", "PASS" if identity.get("valid") else "FAIL", identity.get("path"))
+    package_identity = spec.get("code", {}).get("identity_type") == "package"
+    add_check(checks, "source_packages" if package_identity else "source_git", "PASS" if identity.get("valid") else "FAIL", identity if package_identity else identity.get("path"))
     expected_commit = spec.get("code", {}).get("commit")
     if expected_commit:
         add_check(checks, "commit_match", "PASS" if identity.get("commit", "").startswith(str(expected_commit)) else "FAIL", identity.get("commit"))
     if identity.get("dirty"):
         add_check(checks, "dirty_worktree", "INCONCLUSIVE" if spec.get("code", {}).get("allow_dirty") else "FAIL", identity.get("status_short"))
-    if source and identity.get("valid") and spec.get("environment", {}).get("require_clean_submodules"):
+    if not package_identity and source and identity.get("valid") and spec.get("environment", {}).get("require_clean_submodules"):
         _, submodules = capture(["git", "submodule", "status", "--recursive"], source)
         bad = [line for line in submodules.splitlines() if line[:1] in {"-", "+", "U"}]
         add_check(checks, "submodules", "FAIL" if bad else "PASS", bad or "clean")
@@ -398,8 +416,12 @@ def preflight(spec_path: Path, output: Path | None) -> dict[str, Any]:
         detail: dict[str, Any] = {"path": str(binary)}
         if valid_binary:
             _, detail["file"] = capture(["file", str(binary)])
-            ldd_code, detail["ldd"] = capture(["ldd", str(binary)])
-            detail["ldd_ok"] = ldd_code == 0 and "not found" not in detail["ldd"]
+            if package_identity:
+                detail["ldd"] = "Package console entry; package versions and metadata verified separately"
+                detail["ldd_ok"] = True
+            else:
+                ldd_code, detail["ldd"] = capture(["ldd", str(binary)])
+                detail["ldd_ok"] = ldd_code == 0 and "not found" not in detail["ldd"]
             valid_binary = valid_binary and detail["ldd_ok"]
         add_check(checks, "binary", "PASS" if valid_binary else "FAIL", detail)
 

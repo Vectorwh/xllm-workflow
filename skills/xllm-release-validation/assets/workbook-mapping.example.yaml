@@ -1,0 +1,29 @@
+workbooks:
+  - input: version-planning.xlsx
+    output: version-planning.filled.xlsx
+    sheets:
+      - name: Qwen3.5
+        layout: rows
+        header_row: 1
+        case_selector: {framework: xllm, mode: direct, kind: performance}
+        match:
+          Model: model.name
+          Concurrency: workload.parallel
+        fill:
+          QPS: result.metrics.request_throughput
+          E2E(s): result.metrics.avg_latency_s
+          TTFT(ms): result.metrics.ttft_ms
+          TPOT(ms): result.metrics.tpot_ms
+          Status: result.status
+  - input: model-features.xlsx
+    output: model-features.filled.xlsx
+    sheets:
+      - name: LLM
+        layout: columns
+        key_column: A
+        case_columns:
+          F: {case_id: qwen-bf16-direct.v1.r0}
+        fields:
+          Graph: service.flags.enable_graph
+          Prefix cache: service.flags.enable_prefix_cache
+          New feature: service.flags.enable_new_feature

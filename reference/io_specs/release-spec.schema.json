@@ -1,0 +1,400 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "xLLM release validation specification",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "release",
+    "cases",
+    "environment"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "release": {
+      "type": "object",
+      "required": [
+        "version",
+        "commit"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "baseline_results": {
+          "type": "string"
+        }
+      }
+    },
+    "environment": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
+    "execution": {
+      "type": "object",
+      "properties": {
+        "default_mode": {
+          "enum": [
+            "direct",
+            "xtask"
+          ]
+        },
+        "max_cases": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "code": {
+      "type": "object",
+      "required": [
+        "repo",
+        "binary",
+        "build_verdict",
+        "binary_provenance"
+      ],
+      "properties": {
+        "repo": {
+          "type": "string",
+          "minLength": 1
+        },
+        "binary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "build_verdict": {
+          "type": "string",
+          "minLength": 1
+        },
+        "binary_provenance": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "xtask": {
+      "type": "object",
+      "properties": {
+        "repo": {
+          "type": "string"
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "service_mode": {
+          "enum": [
+            "native",
+            "external"
+          ]
+        }
+      }
+    },
+    "defaults": {
+      "type": "object"
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/case"
+      }
+    },
+    "model_profiles": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "service_profiles": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/service"
+      }
+    },
+    "workload_profiles": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "accuracy_profiles": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "acceptance": {
+      "type": "object"
+    },
+    "preparation": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "containers": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "builds": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "mtp": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "setup": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "resources": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "code_profiles": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "delivery": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "$ref": "#/$defs/delivery"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "scalar": {
+      "type": [
+        "string",
+        "number",
+        "boolean"
+      ]
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "flags": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/scalar"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "array"
+              }
+            ]
+          }
+        },
+        "env": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/scalar"
+          }
+        },
+        "restart_policy": {
+          "enum": [
+            "per_case",
+            "reuse_group"
+          ]
+        },
+        "ownership": {
+          "enum": [
+            "managed",
+            "external"
+          ]
+        },
+        "graph_phase": {
+          "enum": [
+            "none",
+            "decode",
+            "prefill+decode"
+          ]
+        },
+        "activation_checks": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "case": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"
+        },
+        "kind": {
+          "enum": [
+            "performance",
+            "accuracy"
+          ]
+        },
+        "mode": {
+          "enum": [
+            "xtask",
+            "direct"
+          ]
+        },
+        "repetitions": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_attempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "service": {
+          "$ref": "#/$defs/service"
+        },
+        "matrix": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^(service\\.(flags|env)|workload|accuracy)\\.[A-Za-z][A-Za-z0-9_.]*$"
+          },
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true
+          }
+        },
+        "framework": {
+          "enum": [
+            "xllm",
+            "vllm-ascend"
+          ]
+        },
+        "code_profile": {
+          "type": "string"
+        },
+        "comparison_group": {
+          "type": "string"
+        },
+        "delivery": {
+          "$ref": "#/$defs/delivery"
+        }
+      }
+    },
+    "delivery": {
+      "type": "object",
+      "properties": {
+        "xtask_reproduction": {
+          "type": "object",
+          "required": [
+            "image"
+          ],
+          "properties": {
+            "image": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source_url": {
+              "type": "string"
+            },
+            "build": {
+              "type": "object",
+              "required": [
+                "binary",
+                "gate_args"
+              ],
+              "properties": {
+                "binary": {
+                  "type": "string"
+                },
+                "build_dir": {
+                  "type": "string"
+                },
+                "gate_args": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1
+                }
+              }
+            },
+            "container": {
+              "type": "object",
+              "properties": {
+                "reference": false,
+                "mode": false,
+                "name": false,
+                "image": false
+              }
+            },
+            "setup": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "resources": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

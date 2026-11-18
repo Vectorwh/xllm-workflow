@@ -1,0 +1,43 @@
+# Representatives default to BF16/concurrency 1 per framework/mode/kind.
+# List exact expanded case IDs to override. Execution snippets come from archived artifacts.
+schema_version: 1
+report:
+  title: xLLM NPU 模型适配交付报告
+  models: '{{本次模型范围}}'
+  author: '{{编写人}}'
+  date: '{{YYYY-MM-DD}}'
+  background: '{{业务诉求 目标模型 交付目的}}'
+  release_scope: '{{发版分支及范围 本次新增能力 计划覆盖场景 验收标准}}'
+  conclusion: '{{根据测试证据填写结论 未测 阻塞及失败场景须说明}}'
+  feature_details: '{{每项新特性的原理 性能或精度收益 适用条件及限制}}'
+  accuracy_method: '{{EvalScope版本 CEval数据版本/路径 全量或子集 few-shot thinking 答案提取 采样参数 分数单位及阈值}}'
+  performance_method: '{{数据集 长度及核对方式 固定并发或 rate 请求总数 warmup seed EOS stream 重复轮次 同服务复用顺序}}'
+  comparison_method: '{{对照框架或历史版本 硬件 权重 Tokenizer 接口 采样 配置差异 公平性结论}}'
+  limitations: '{{已知限制 未完成场景 发布建议和后续动作}}'
+  reproduction: '{{宿主机及容器入口 run root 复现文档入口 资源准备和执行步骤}}'
+  multimodal_accuracy_method: '{{可选 数据集版本 样本数 图片预处理和计分方法}}'
+  multimodal_performance_method: '{{可选 文本和图片输入 图片数量分辨率 输出长度 并发及请求数}}'
+  mtp_preparation: '{{转换工具commit 脚本SHA256 主权重及draft身份 是否复用 准备结果 不用MTP填不适用}}'
+blocks:
+  build_record:
+    text: '{{源码目录 是否直接或增量编译 dirty diff 外置兼容处理 可执行文件及SHA256 vLLM镜像和包版本}}'
+  container_script:
+    text: '{{实际容器创建命令 镜像 tag 和 digest devices 挂载 network ipc shm}}'
+  multimodal_start_script:
+    text: '{{可选 多模态实际启动脚本}}'
+  multimodal_test_script:
+    text: '{{可选 多模态实际评测脚本}}'
+tables:
+  prs: []
+  features: []
+  environment: []
+  deployment: []
+  comparisons: []
+  risks: []
+  artifacts: []
+  multimodal_accuracy: []
+  multimodal_perf: []
+options:
+  include_multimodal: false
+  include_raw_metrics: false
+representatives: []

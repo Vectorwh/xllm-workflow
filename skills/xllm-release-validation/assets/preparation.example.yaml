@@ -1,0 +1,59 @@
+# Copy locally and replace every identity/path. No preparation runs during plan.
+containers:
+  - name: xllm-release
+    mode: create
+    reference: xllm-reference
+    binds: [/shared:/shared]
+    command: [sleep, infinity]
+    # Other HostConfig constraints are copied from the reference. Published
+    # ports require explicit new PortBindings; the reference is never stopped.
+  - name: vllm-release
+    mode: create
+    image: quay.io/ascend/vllm-ascend:REPLACE_WITH_USER_VERSION
+    pull: true
+    binds:
+      - /shared:/shared
+      - /models:/models:ro
+      - /usr/local/Ascend/driver:/usr/local/Ascend/driver:ro
+      - /usr/local/sbin/npu-smi:/usr/local/sbin/npu-smi:ro
+    host_config:
+      NetworkMode: host
+      IpcMode: host
+      ShmSize: 68719476736
+      Devices:
+        - {PathOnHost: /dev/davinci0, PathInContainer: /dev/davinci0, CgroupPermissions: rwm}
+        - {PathOnHost: /dev/davinci1, PathInContainer: /dev/davinci1, CgroupPermissions: rwm}
+        - {PathOnHost: /dev/davinci_manager, PathInContainer: /dev/davinci_manager, CgroupPermissions: rwm}
+        - {PathOnHost: /dev/devmm_svm, PathInContainer: /dev/devmm_svm, CgroupPermissions: rwm}
+        - {PathOnHost: /dev/hisi_hdc, PathInContainer: /dev/hisi_hdc, CgroupPermissions: rwm}
+sources:
+  - repo: /shared/code/xllm-release
+    url: https://github.com/xllm-ai/xllm.git
+    commit: '0000000000000000000000000000000000000000'
+    context: {container: xllm-release, python: python3}
+builds:
+  - repo: /shared/code/xllm-release
+    build_dir: /shared/code/xllm-release/build
+    binary: /shared/code/xllm-release/build/lib.linux-aarch64-cpython-311/xllm/xllm
+    run_root: /shared/build-record/release-candidate-001
+    context:
+      container: xllm-release
+      python: python3
+      sources: [/usr/local/Ascend/ascend-toolkit/set_env.sh, /usr/local/Ascend/nnal/atb/set_env.sh]
+    # Obtain these commands/paths from the pinned checkout's build documentation.
+    gate_args:
+      - --configure-command
+      - 'python3 setup.py build'
+      - --incremental-command
+      - 'cmake --build /shared/code/xllm-release/build --target xllm -j 16'
+      - --opp-marker
+      - /usr/local/Ascend/ascend-toolkit/latest/opp/vendors/custom_xllm_math/.xllm_ops_git_head
+      - --opp-package-root
+      - /shared/code/xllm-release/third_party/xllm_ops/build_out/packages/vendors/custom_xllm_math
+mtp:
+  - repo: /shared/code/xllm-release
+    commit: '0000000000000000000000000000000000000000'
+    input_dir: /models/Qwen3.5-27B
+    output_dir: /models/Qwen3.5-27B-mtp-release
+    model_type: qwen3_5
+    context: {container: xllm-release, python: python3}

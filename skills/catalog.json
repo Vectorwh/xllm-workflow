@@ -1023,6 +1023,68 @@
         ],
         "featured": false
       }
+    },
+    {
+      "id": "xllm-release-validation",
+      "directory": "xllm-release-validation",
+      "category": "orchestrator",
+      "visibility": "public",
+      "routing_priority": 8,
+      "primary_intents": [
+        "versioned release test planning execution and delivery",
+        "release performance accuracy matrix with xtask or direct execution",
+        "release regression workbook filling and reproducibility"
+      ],
+      "negative_intents": [
+        "one ordinary performance workload",
+        "open-ended code optimization",
+        "standalone service maintenance",
+        "patching xtask source"
+      ],
+      "dependencies": [
+        "xllm-experiment-lifecycle",
+        "xllm-npu-build-gate",
+        "xllm-npu-server-manager",
+        "xllm-npu-perf-runner",
+        "xllm-npu-accuracy-runner",
+        "xllm-npu-benchmark",
+        "xllm-npu-report-writer"
+      ],
+      "lifecycle_stage": [
+        "planning",
+        "build",
+        "service",
+        "evaluation",
+        "validation",
+        "reporting",
+        "recording"
+      ],
+      "framework_scope": [
+        "xllm",
+        "vllm-ascend",
+        "comparison-artifacts"
+      ],
+      "backend_scope": [
+        "ascend-npu",
+        "xtask",
+        "direct"
+      ],
+      "ownership": "release-validation-campaign",
+      "presentation": {
+        "display_name": "Release Validation",
+        "display_name_zh": "发版数据测试",
+        "domain": "evaluation",
+        "role_group": "orchestration",
+        "exposure": "public-primary",
+        "summary": "Prepare release environments, run xTask/direct EvalScope matrices and compare xLLM with a pinned vLLM-Ascend baseline, with reproducible Word and workbook delivery.",
+        "summary_zh": "准备容器、构建和MTP，使用 xTask/direct 执行 EvalScope 矩阵并对比指定版本 vLLM-Ascend，交付 Word、表格和复现材料。",
+        "outputs": [
+          "versioned test matrix",
+          "validated release data",
+          "Word delivery report, filled workbooks and reproduction bundle"
+        ],
+        "featured": true
+      }
     }
   ],
   "aliases": []
