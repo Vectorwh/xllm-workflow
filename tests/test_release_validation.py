@@ -67,6 +67,30 @@ def test_extensible_flags_matrix_preserves_false_and_values(config):
     assert "enable_unspecified_feature" not in false_case["service"]["flags"]
 
 
+def test_pytorch_default_reaches_direct_and_native_xtask(config, tmp_path):
+    config["service_profiles"]["tp2"]["flags"].pop("npu_kernel_backend", None)
+    case = common.expand(config)[0]
+    directory = tmp_path / "preview"
+    direct_adapter.render_service(case, directory)
+    assert "--npu_kernel_backend=TORCH" in (directory / "service/start.sh").read_text()
+    case["mode"] = "xtask"
+    case["case_id"] = case["id"]
+    case["xtask"]["commit"] = "b" * 40
+    case["delivery"]["xtask_native"]["image"] = "fixture/xllm:release"
+    from delivery_native import generate
+    native = generate(case, {"version": "fixture", "commit": "a" * 40})
+    assert native["deployment"]["instances"][0]["serving_extensiable_param"]["npu_kernel_backend"] == "TORCH"
+
+
+def test_backend_default_preserves_explicit_matrix_and_vllm_config(config):
+    config["cases"][0]["matrix"] = {"service.flags.npu_kernel_backend": ["ATB", "AUTO"]}
+    cases = common.expand(config)
+    assert {c["service"]["flags"]["npu_kernel_backend"] for c in cases} == {"ATB", "AUTO"}
+    comparison = common.load_config(common.ASSETS / "release-comparison.example.yaml")
+    vllm = [c for c in common.expand(comparison) if c["framework"] == "vllm-ascend"]
+    assert vllm and all("npu_kernel_backend" not in c["service"]["flags"] for c in vllm)
+
+
 @pytest.mark.parametrize("flags", [{"model": "wrong"}, {"bad-name": True}, {"new_flag": []}])
 def test_invalid_or_identity_overriding_flags_rejected(case, flags):
     case["service"]["flags"].update(flags)

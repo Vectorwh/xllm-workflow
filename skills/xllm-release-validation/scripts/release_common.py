@@ -127,6 +127,8 @@ def expand(config):
                 case["mode"] = case.get("mode", config.get("execution", {}).get("default_mode", "direct"))
                 case["kind"] = case.get("kind", "performance")
                 case["framework"] = case.get("framework", "xllm")
+                if case["framework"] == "xllm":
+                    case.setdefault("service", {}).setdefault("flags", {}).setdefault("npu_kernel_backend", "TORCH")
                 case["code"] = merge(config.get("code", {}) if case["framework"] == "xllm" else {}, case.get("code", {}))
                 if case["framework"] == "xllm": case["code"]["commit"] = config["release"]["commit"]
                 case["environment"] = merge(config.get("environment", {}), case.get("environment", {}))

@@ -7,6 +7,8 @@ description: 编排 xLLM 版本发布的场景矩阵、性能与精度回归、�
 
 以版本、场景和验收目标组织测试，支持 xLLM 与用户指定版本的 vLLM-Ascend 性能比较。参数来自本轮配置，不把 011 的兼容处理当后续版本默认值。
 
+后续 xLLM 发版测试默认使用 PyTorch 路径，显式设置 `service.flags.npu_kernel_backend: TORCH`（启动参数 `--npu_kernel_backend=TORCH`），适用于 direct、xTask、性能和精度。用户显式指定其他后端或扫描该参数时按其配置执行；目标版本不支持 TORCH 时报告阻塞，不静默换后端。保留历史已锁定计划及测量记录原配置。
+
 ## 流程
 
 1. 读 [planning.md](references/planning.md)，从版本规划/模型清单生成矩阵、资源和验收方案。框架 `xllm/vllm-ascend` 与执行方式 `direct/xtask` 分开配置；沿用用户已给出的执行授权。
