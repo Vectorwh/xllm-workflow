@@ -41,7 +41,10 @@ service_profiles:
     graph_phase: decode
     flags:
       communication_backend: hccl
+      model_impl: python
       npu_kernel_backend: TORCH
+      enable_shared_expert_overlap: true
+      enable_static_kernel: true
       enable_graph: true
       enable_graph_mode_decode_no_padding: false
       enable_chunked_prefill: true

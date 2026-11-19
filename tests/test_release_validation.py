@@ -67,28 +67,51 @@ def test_extensible_flags_matrix_preserves_false_and_values(config):
     assert "enable_unspecified_feature" not in false_case["service"]["flags"]
 
 
-def test_pytorch_default_reaches_direct_and_native_xtask(config, tmp_path):
-    config["service_profiles"]["tp2"]["flags"].pop("npu_kernel_backend", None)
+@pytest.mark.parametrize("kind", ["performance", "accuracy"])
+def test_pytorch_default_reaches_direct_and_native_xtask(config, tmp_path, kind):
+    defaults = {"model_impl": "python", "npu_kernel_backend": "TORCH",
+                "enable_shared_expert_overlap": True, "enable_static_kernel": True}
+    for key in defaults:
+        config["service_profiles"]["tp2"]["flags"].pop(key, None)
+    config["cases"][0]["kind"] = kind
+    if kind == "accuracy":
+        config["cases"][0]["accuracy_profile"] = "ceval"
     case = common.expand(config)[0]
     directory = tmp_path / "preview"
     direct_adapter.render_service(case, directory)
-    assert "--npu_kernel_backend=TORCH" in (directory / "service/start.sh").read_text()
+    script = (directory / "service/start.sh").read_text()
+    commands = common.read_json(directory / "service/commands.json")
+    for key, value in defaults.items():
+        arg = f"--{key}={str(value).lower() if isinstance(value, bool) else value}"
+        assert arg in script and all(arg in command for command in commands)
+    internal = xtask_adapter.task_config(case)
+    assert all(internal["deployment"]["instances"][0]["serving_extensiable_param"][key] == value
+               for key, value in defaults.items())
     case["mode"] = "xtask"
     case["case_id"] = case["id"]
     case["xtask"]["commit"] = "b" * 40
     case["delivery"]["xtask_native"]["image"] = "fixture/xllm:release"
     from delivery_native import generate
     native = generate(case, {"version": "fixture", "commit": "a" * 40})
-    assert native["deployment"]["instances"][0]["serving_extensiable_param"]["npu_kernel_backend"] == "TORCH"
+    assert all(native["deployment"]["instances"][0]["serving_extensiable_param"][key] == value
+               for key, value in defaults.items())
 
 
 def test_backend_default_preserves_explicit_matrix_and_vllm_config(config):
-    config["cases"][0]["matrix"] = {"service.flags.npu_kernel_backend": ["ATB", "AUTO"]}
+    config["cases"][0]["service"] = {"flags": {"model_impl": "native", "enable_shared_expert_overlap": False}}
+    config["cases"][0]["matrix"] = {"service.flags.npu_kernel_backend": ["ATB", "AUTO"],
+                                    "service.flags.enable_static_kernel": [False, True]}
     cases = common.expand(config)
     assert {c["service"]["flags"]["npu_kernel_backend"] for c in cases} == {"ATB", "AUTO"}
+    assert {c["service"]["flags"]["enable_static_kernel"] for c in cases} == {False, True}
+    assert all(c["service"]["flags"]["model_impl"] == "native" for c in cases)
+    for case in cases:
+        assert "--enable_shared_expert_overlap=false" in common.flag_args(case, 0)
+        assert xtask_adapter.task_config(case)["deployment"]["instances"][0]["serving_extensiable_param"]["enable_shared_expert_overlap"] is False
     comparison = common.load_config(common.ASSETS / "release-comparison.example.yaml")
     vllm = [c for c in common.expand(comparison) if c["framework"] == "vllm-ascend"]
-    assert vllm and all("npu_kernel_backend" not in c["service"]["flags"] for c in vllm)
+    xllm_only = {"model_impl", "npu_kernel_backend", "enable_shared_expert_overlap", "enable_static_kernel"}
+    assert vllm and all(not xllm_only.intersection(c["service"]["flags"]) for c in vllm)
 
 
 @pytest.mark.parametrize("flags", [{"model": "wrong"}, {"bad-name": True}, {"new_flag": []}])

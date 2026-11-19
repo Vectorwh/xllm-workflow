@@ -8,7 +8,20 @@
 
 配置层次：公共 defaults → code/model/service/workload/accuracy profile → case 覆盖 → matrix 展开。执行方式由 case.mode 覆盖 execution.default_mode。xLLM 启动参数为开放的 bool/number/string 字典，vLLM 接受原生短横线参数和 JSON 字典；身份参数 model、model_id、draft_model、nnodes、rank、端口由调度器控制，避免两处来源互相覆盖。
 
-xLLM 新计划未指定 npu_kernel_backend 时显式补为 TORCH，即默认 PyTorch 启动；defaults/profile/case/matrix 中的显式值优先。该默认同时进入 direct 脚本与 xTask serving_extensiable_param，不作用于 vLLM-Ascend，也不追改历史计划和交付配置。backend=llm/vlm 是模型类别；本次默认选择的是 npu_kernel_backend。目标版本必须支持该参数与模型路径，否则阻塞并说明。
+xLLM 新计划对未指定的启动项补入以下默认值；defaults/profile/case/matrix 中的显式值优先，包括 false。它们同时进入 direct 脚本、内部 xTask 用例和交付的原生 xTask `serving_extensiable_param`，不作用于 vLLM-Ascend，也不追改历史锁定计划及交付配置。
+
+```yaml
+service:
+  flags:
+    model_impl: python
+    npu_kernel_backend: TORCH
+    enable_shared_expert_overlap: true
+    enable_static_kernel: true
+```
+
+`backend=llm/vlm` 是模型类别；`model_impl=python` 才选择 Python 模型实现，`npu_kernel_backend=TORCH` 选择算子后端。按指定源码版本核对 Python 模型支持、Python 包/原生扩展及算子依赖，必要时显式填写 `python_model_path` 和环境路径，不复制其他实验的私有目录。[Vectorwh/xllm 参数定义](https://github.com/Vectorwh/xllm/blob/db7c60f45db6548ec9efd9544131e929a00395f7/xllm/core/framework/config/model_config.cpp#L42)可作参考，不能替代本轮版本校验。
+
+`enable_static_kernel=true` 要求 NPU Python executor、`enable_graph=true`，以及配套 CANN 静态编译和 TorchNPU 算子采集/重选接口；详见该版本的 [executor](https://github.com/Vectorwh/xllm/blob/db7c60f45db6548ec9efd9544131e929a00395f7/xllm/python/model_executor/executor.py#L369) 与 [静态 kernel 实现](https://github.com/Vectorwh/xllm/blob/db7c60f45db6548ec9efd9544131e929a00395f7/xllm/python/model_executor/static_kernel.py#L86)。关闭图模式或改用 native 模型时须按目标版本显式调整相关配置。共享专家重叠按模型实际支持验证，不能因设置为 true 就判定生效；本次检查的 Vectorwh/xllm main（`db7c60f45db6548ec9efd9544131e929a00395f7`）配置声明中未找到 `enable_shared_expert_overlap`，故该项仍须在目标版本 CLI help 中核实。参数、模型或依赖不支持时报告阻塞，不删除参数或静默换回其他实现。
 
 matrix 支持 `service.flags.*`、`service.env.*`、`workload.*`、`accuracy.*`。`workload.parallel` 可直接写列表。每种组合及 repeat 都有唯一 case id，number 是该档正式总请求数，不乘并发。打印展开后的数量和服务组，避免无意执行巨大的笛卡尔积。所有默认值、显式关闭和未设置的开关分别保留；未设置值导出为 default，不臆测真实开关状态。
 

@@ -49,7 +49,10 @@ service_profiles:
     flags:
       communication_backend: hccl
       backend: llm
+      model_impl: python
       npu_kernel_backend: TORCH
+      enable_shared_expert_overlap: true
+      enable_static_kernel: true
       block_size: 128
       enable_graph: true
       enable_graph_double_buffer: false
